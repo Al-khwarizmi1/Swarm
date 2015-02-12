@@ -6,7 +6,7 @@ var canvasHelper = function (c) {
     var cities = [];
 
     return {
-        drawPoints: function (p) {
+        drawCities: function (p) {
             cities = p;
             context.fillStyle = '#000000';
             for (var i = 0; i < cities.length; i++) {
@@ -68,7 +68,7 @@ var swarmHelper = function (canvas, bestCanvas) {
 
         var pos = getMousePos(this, e);
         cities.push(pos);
-        drawingBoard.drawPoints(cities);
+        drawingBoard.drawCities(cities);
     });
 
     //random city selector
@@ -118,7 +118,7 @@ var swarmHelper = function (canvas, bestCanvas) {
         return dist;
     };
 
-    var hasDublicates = function (particle) {
+    var hasDuplicates = function (particle) {
         var citiesInPath = [];
         for (var i = 0; i < cities.length; i++) {
             if (citiesInPath[particle[i]]) {
@@ -131,7 +131,7 @@ var swarmHelper = function (canvas, bestCanvas) {
 
     var getFitness = function (particle) {
         //penalty for cheating, when same city is visited more than once
-        var penalty = hasDublicates(particle) * cities.length * maxDist;
+        var penalty = hasDuplicates(particle) * cities.length * maxDist;
         var distance = getTotalDistance(particle);
         return Math.round(distance + penalty);
     };
@@ -173,7 +173,7 @@ var swarmHelper = function (canvas, bestCanvas) {
         return Math.round(sum / swarm.length);
     };
 
-    //---------------------------------------
+    //helper functions to output information
     var printResults = function () {
         var table = document.createElement('TABLE');
         var tableDiv = document.getElementById('results');
@@ -223,6 +223,8 @@ var swarmHelper = function (canvas, bestCanvas) {
         tableDiv.appendChild(document.createTextNode('Avg fitness: ' + avgFitness()));
         tableDiv.appendChild(document.createElement('br'));
         tableDiv.appendChild(document.createTextNode('Iteration: ' + iterations));
+        tableDiv.appendChild(document.createElement('br'));
+        tableDiv.appendChild(document.createTextNode('City count: ' + cities.length));
 
         tableDiv.appendChild(table);
     };
@@ -320,7 +322,7 @@ var swarmHelper = function (canvas, bestCanvas) {
             sizeOfSwarm = parseInt(document.getElementById('swarmSize').value);
             swarm = [];
             initialize();
-            drawPoints();
+            drawCities();
             printResults();
         }
     };
@@ -330,7 +332,7 @@ var swarmHelper = function (canvas, bestCanvas) {
         mutate();
 
         cleanCanvas();
-        drawPoints();
+        drawCities();
 
         calculateFitness();
         printResults();
@@ -339,9 +341,9 @@ var swarmHelper = function (canvas, bestCanvas) {
 
 
     //helper functions to sinchronize canvas operations
-    var drawPoints = function () {
-        bestDrawingBoard.drawPoints(cities);
-        drawingBoard.drawPoints(cities);
+    var drawCities = function () {
+        bestDrawingBoard.drawCities(cities);
+        drawingBoard.drawCities(cities);
     };
 
     var cleanCanvas = function () {
@@ -353,7 +355,7 @@ var swarmHelper = function (canvas, bestCanvas) {
         bestDrawingBoard.clean();
         drawingBoard.clean();
     };
-
+    //---------------------------------------
 
     return {
         start: function () {
@@ -361,7 +363,7 @@ var swarmHelper = function (canvas, bestCanvas) {
             disableInputFields(true);
             timer = setInterval(function () {
                 stepByOne();
-            }, 200);
+            }, 50);
         },
         step: function () {
             initializeOnFirstStep();
