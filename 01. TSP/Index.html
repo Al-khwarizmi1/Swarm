@@ -1,13 +1,30 @@
 <html>
 <body>
-    <canvas height="500" width="500" id="tspCanvas"></canvas>
-    <canvas height="500" width="500" id="bestSolutionCanvas"></canvas>
+    <table>
+        <thead>
+            <tr>
+                <td>All particles</td>
+                <td>Best particle</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <canvas height="500" width="500" id="tspCanvas"></canvas>
+                </td>
+                <td>
+                    <canvas height="500" width="500" id="bestSolutionCanvas"></canvas>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
     <br />
     <input type="text" id="swarmSize" value="10" />
     <input type="button" id="cleanBtn" onclick="swarm.clean()" value="Clean" />
     <input type="button" id="startBtn" onclick="swarm.start()" value="Start" />
     <input type="button" id="stepBtn" onclick="swarm.step()" value="Step" />
-    <input type="button" id="stopBtn" onclick="swarm.stop()" value="Stop" />
+    <input type="button" id="stopBtn" onclick="swarm.clean()" value="Stop" />
 
     <div id="results">
     </div>

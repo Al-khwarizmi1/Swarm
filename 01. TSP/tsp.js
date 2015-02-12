@@ -3,33 +3,35 @@
 var canvasHelper = function (c) {
     var canvas = c;
     var context = canvas.getContext('2d');
-    var points = [];
+    var cities = [];
 
     return {
         drawPoints: function (p) {
-            points = p;
+            cities = p;
             context.fillStyle = '#000000';
-            for (var i = 0; i < points.length; i++) {
-                context.fillRect(points[i].x, points[i].y, 5, 5);
+            for (var i = 0; i < cities.length; i++) {
+                context.fillRect(cities[i].x, cities[i].y, 5, 5);
             }
         },
         clean: function () {
             context.fillStyle = '#CCCCCC';
             context.fillRect(0, 0, canvas.width, canvas.height);
-            points = [];
+            cities = [];
         },
         drawLine: function (line) {
-            if (line.length > points.length) {
-                console.error('line is too long, points: ' + points.length);
+            if (line.length > cities.length) {
+                console.error('line is too long, cities: ' + cities.length);
                 return;
             }
 
             context.beginPath();
-            var firstPoint = points[line[0]];
+            var firstPoint = cities[line[0]];
             context.moveTo(firstPoint.x, firstPoint.y);
             for (var z = 1; z < line.length; z++) {
-                context.lineTo(points[line[z]].x, points[line[z]].y);
+                context.lineTo(cities[line[z]].x, cities[line[z]].y);
             }
+
+            context.lineTo(cities[line[0]].x, cities[line[0]].y);
 
             context.strokeStyle = line.color;
             context.stroke();
@@ -37,20 +39,18 @@ var canvasHelper = function (c) {
     };
 };
 
-var swarmHelper = function (c, best) {
-    var canvas = c;
-    var bestCanvas = best;
-    var sizeOfSwarm;
-    var points = [];    //city locations X, Y
-    var swarm = [];     //swarm, each swarm element is array of points
+var swarmHelper = function (canvas, bestCanvas) {
+    var sizeOfSwarm;    //amount of different paths to use
+    var cities = [];    //city locations X, Y
+    var swarm = [];     //each swarm element is array of cuties
     var maxDist = 0;    //longest distance between any two cities, used for punishment   
-    var timer;
-    var iterations = 0;
+    var timer;          //automate algorithm execution
+    var iterations = 0; //algorithm step
 
-    var drawingBoard = canvasHelper(c);
-    var bestDrawingBoard = canvasHelper(bestCanvas);
+    var drawingBoard = canvasHelper(c); //used to draw all paths
+    var bestDrawingBoard = canvasHelper(bestCanvas); //used to draw current best path
 
-
+    //get mouse position inside canvas, to add c 
     var getMousePos = function (canvas, e) {
         var rect = canvas.getBoundingClientRect();
         return {
@@ -59,24 +59,28 @@ var swarmHelper = function (c, best) {
         };
     };
 
+    //add mouse click listener to main canvas
     canvas.addEventListener('mousedown', function (e) {
-        if (document.getElementById('tspCanvas').disabled) {
+        //canvas element is disabled when algorithm is running
+        if (canvas.disabled) {
             return;
         }
+
         var pos = getMousePos(this, e);
-        points.push(pos);
-        drawingBoard.drawPoints(points);
+        cities.push(pos);
+        drawingBoard.drawPoints(cities);
     });
 
     //random city selector
     var randomCity = function () {
-        return random(points.length);
+        return random(cities.length);
     };
 
     var random = function (max) {
         return Math.floor(Math.random() * max);
     };
 
+    //each swarm gets random color before algorithm start
     var getRandomColor = function () {
         var letters = '0123456789ABCDEF'.split('');
         var color = '#';
@@ -87,13 +91,14 @@ var swarmHelper = function (c, best) {
     };
 
     var getDistance = function (a, b) {
-        return Math.sqrt(Math.pow(points[a].x - points[b].x, 2) + Math.pow(points[a].y - points[b].y, 2));
+        return Math.sqrt(Math.pow(cities[a].x - cities[b].x, 2) + Math.pow(cities[a].y - cities[b].y, 2));
     };
 
+    //max distance between any two points, used as punishment
     var maxDistance = function () {
         var max = 0;
-        for (var i = 0; i < points.length; i++) {
-            for (var a = 0; a < points.length; a++) {
+        for (var i = 0; i < cities.length; i++) {
+            for (var a = 0; a < cities.length; a++) {
                 max = Math.max(getDistance(i, a), max);
             }
         }
@@ -102,26 +107,31 @@ var swarmHelper = function (c, best) {
 
     var getTotalDistance = function (particle) {
         var dist = 0;
-        for (var i = 0; i < points.length - 1; i++) {
+        for (var i = 0; i < cities.length - 1; i++) {
             dist += getDistance(particle[i], particle[i + 1]);
         }
+
+        if (cities.length > 2) {
+            dist += getDistance(particle[0], particle[cities.length - 1]);
+        }
+
         return dist;
     };
 
     var hasDublicates = function (particle) {
-        var pointsInPath = [];
-        for (var i = 0; i < points.length; i++) {
-            if (pointsInPath[particle[i]]) {
+        var citiesInPath = [];
+        for (var i = 0; i < cities.length; i++) {
+            if (citiesInPath[particle[i]]) {
                 return true
             }
-            pointsInPath[particle[i]] = true;
+            citiesInPath[particle[i]] = true;
         }
         return false;
     };
 
     var getFitness = function (particle) {
-        //penalty for cheating, if same city is visited more than once
-        var penalty = hasDublicates(particle) * points.length * maxDist;
+        //penalty for cheating, when same city is visited more than once
+        var penalty = hasDublicates(particle) * cities.length * maxDist;
         var distance = getTotalDistance(particle);
         return Math.round(distance + penalty);
     };
@@ -217,7 +227,7 @@ var swarmHelper = function (c, best) {
         tableDiv.appendChild(table);
     };
 
-    var disableInput = function (disable) {
+    var disableInputFields = function (disable) {
         document.getElementById('tspCanvas').disabled = disable;
         document.getElementById('swarmSize').disabled = disable;
         document.getElementById('cleanBtn').disabled = disable;
@@ -227,12 +237,12 @@ var swarmHelper = function (c, best) {
     }
     //---------------------------------------
 
-    //create random path using all points only once
+    //create random path using all cities only once
     var uniquePath = function () {
         var p = [];
         var path = [];
 
-        for (var j = 0; j < points.length; j++) {
+        for (var j = 0; j < cities.length; j++) {
             p.push(j);
         }
 
@@ -249,11 +259,11 @@ var swarmHelper = function (c, best) {
         for (var i = 0; i < sizeOfSwarm; i++) {
             var particle = [];
 
-            //get random path
+            //get random path, which goes only once to each citie
             particle = uniquePath();
-            //random color
+            //random color for display
             particle.color = getRandomColor();
-            //calculate fitness
+            //calculate fitness, path between from first city to last
             particle.fitness = getFitness(particle);
 
             swarm.push(particle);
@@ -262,10 +272,10 @@ var swarmHelper = function (c, best) {
         maxDist = maxDistance();
     };
 
-    //switch 20% random points from fittest to others
+    //switch 20% random cities from fittest to others
     var crossOver = function () {
         var bestId = bestParticleId();
-        var amountToCross = Math.floor(points.length * 0.2);
+        var amountToCross = Math.floor(cities.length * 0.2);
         for (var i = 0; i < swarm.length; i++) {
             for (var a = 0; a < amountToCross; a++) {
                 var toCross = randomCity();
@@ -274,7 +284,7 @@ var swarmHelper = function (c, best) {
         }
     };
 
-    //20% chance to mutate (swap points), exclude fittest
+    //20% chance to mutate (swap cities), exclude fittest
     var mutate = function () {
         var bestId = bestParticleId();
         var amountToMutate = 1;
@@ -293,68 +303,76 @@ var swarmHelper = function (c, best) {
         }
     };
 
+    //calculate fitness for all swarm elements and update canvas
     var calculateFitness = function () {
         for (var i = 0; i < sizeOfSwarm; i++) {
             swarm[i].fitness = getFitness(swarm[i]);
             drawingBoard.drawLine(swarm[i]);
         }
+
         swarm.sort(function (a, b) { return a.fitness - b.fitness; });
-        bestDrawingBoard.clean();
-        bestDrawingBoard.drawPoints(points);
         bestDrawingBoard.drawLine(swarm[0]);
     };
 
+
+    var initializeOnFirstStep = function () {
+        if (iterations == 0) {
+            sizeOfSwarm = parseInt(document.getElementById('swarmSize').value);
+            swarm = [];
+            initialize();
+            drawPoints();
+            printResults();
+        }
+    };
+
+    var stepByOne = function () {
+        crossOver();
+        mutate();
+
+        cleanCanvas();
+        drawPoints();
+
+        calculateFitness();
+        printResults();
+        iterations++;
+    };
+
+
+    //helper functions to sinchronize canvas operations
+    var drawPoints = function () {
+        bestDrawingBoard.drawPoints(cities);
+        drawingBoard.drawPoints(cities);
+    };
+
+    var cleanCanvas = function () {
+        bestDrawingBoard.clean();
+        drawingBoard.clean();
+    };
+
+    var drawSwarms = function () {
+        bestDrawingBoard.clean();
+        drawingBoard.clean();
+    };
+
+
     return {
         start: function () {
-            if (iterations == 0) {
-                sizeOfSwarm = parseInt(document.getElementById('swarmSize').value);
-                swarm = [];
-                initialize();
-                drawingBoard.drawPoints(points);
-                printResults();
-            }
-            disableInput(true);
-
+            initializeOnFirstStep();
+            disableInputFields(true);
             timer = setInterval(function () {
-                crossOver();
-                mutate();
-                drawingBoard.clean();
-                drawingBoard.drawPoints(points);
-                calculateFitness();
-                printResults();
-                iterations++;
+                stepByOne();
             }, 200);
         },
-        stop: function () {
-            clearInterval(timer);
-
-            disableInput(false);
-        },
         step: function () {
-            if (iterations == 0) {
-                sizeOfSwarm = parseInt(document.getElementById('swarmSize').value);
-                swarm = [];
-                initialize();
-                drawingBoard.drawPoints(points);
-                printResults();
-            }
-            crossOver();
-            mutate();
-            iterations++;
-            drawingBoard.clean();
-            drawingBoard.drawPoints(points);
-            calculateFitness();
-            printResults();
+            initializeOnFirstStep();
+            stepByOne();
         },
         clean: function () {
             clearInterval(timer);
-            drawingBoard.clean();
-            bestDrawingBoard.clean();
-            points = [];
+            cleanCanvas();
+            cities = [];
             swarm = [];
-
-            disableInput(false);
-
+            disableInputFields(false);
             iterations = 0;
         }
     }
