@@ -204,7 +204,7 @@ var swarmHelper = function (canvas, bestCanvas) {
         for (i = 0; i < swarm.length; i++) {
             var tr = document.createElement('TR');
             var td1 = document.createElement('TD');
-            td1.appendChild(document.createTextNode(i));
+            td1.appendChild(document.createTextNode(swarm[i].index));
             tr.appendChild(td1);
 
             var td2 = document.createElement('TD');
@@ -269,6 +269,8 @@ var swarmHelper = function (canvas, bestCanvas) {
             particle.color = getRandomColor();
             //calculate fitness, path between from first city to last
             particle.fitness = getFitness(particle);
+
+            particle.index = i;
 
             swarm.push(particle);
             drawingBoard.drawLine(particle);
