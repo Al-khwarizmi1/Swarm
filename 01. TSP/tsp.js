@@ -62,7 +62,9 @@ var swarmHelper = function (canvas, bestCanvas) {
     //add mouse click listener to main canvas
     canvas.addEventListener('mousedown', function (e) {
         //canvas element is disabled when algorithm is running
-        if (canvas.disabled) {
+        // or when algorithm was running and then paused, should clean and then add more cities
+        if (canvas.disabled
+            || (cities.length > 0 && iterations != 0)) {
             return;
         }
 
@@ -274,14 +276,33 @@ var swarmHelper = function (canvas, bestCanvas) {
         maxDist = maxDistance();
     };
 
-    //switch 20% random cities from fittest to others
+    var indexOf = function (element, array) {
+        for (var i = 0; i < array.length; i++) {
+            if (array[i] === element) {
+                return i;
+            }
+        }
+        return null;
+    }
+
+    //take 20% random cities from fittest to others
     var crossOver = function () {
         var bestId = bestParticleId();
         var amountToCross = Math.floor(cities.length * 0.2);
         for (var i = 0; i < swarm.length; i++) {
             for (var a = 0; a < amountToCross; a++) {
                 var toCross = randomCity();
-                swarm[i][toCross] = swarm[bestId][toCross];
+                var from = indexOf(swarm[bestId][toCross], swarm[i]);
+
+                if (from == null) {
+                    continue;
+                }
+
+                var tempIndex = from;
+                var tempValue = swarm[i][from];
+
+                swarm[i][from] = swarm[i][toCross];
+                swarm[i][toCross] = tempValue;
             }
         }
     };
@@ -289,9 +310,9 @@ var swarmHelper = function (canvas, bestCanvas) {
     //20% chance to mutate (swap cities), exclude fittest
     var mutate = function () {
         var bestId = bestParticleId();
-        var amountToMutate = 1;
+        var amountToMutate = Math.floor(cities.length * (random(3) * 0.1));
         for (var i = 0; i < swarm.length; i++) {
-            var doMutation = random(5);
+            var doMutation = random(3);
 
             if (bestId != i && doMutation == 1) {
                 for (var a = 0; a < amountToMutate; a++) {
@@ -368,6 +389,10 @@ var swarmHelper = function (canvas, bestCanvas) {
         step: function () {
             initializeOnFirstStep();
             stepByOne();
+        },
+        stop:function(){
+            clearInterval(timer);
+            disableInputFields(false);
         },
         clean: function () {
             clearInterval(timer);
