@@ -20,7 +20,7 @@ var canvasHelper = function (c) {
         },
         drawLine: function (line) {
             if (line.length > points.length) {
-                console.log('line is too long, points: ' + points.length);
+                console.error('line is too long, points: ' + points.length);
                 return;
             }
 
@@ -37,8 +37,9 @@ var canvasHelper = function (c) {
     };
 };
 
-var swarmHelper = function (c) {
+var swarmHelper = function (c, best) {
     var canvas = c;
+    var bestCanvas = best;
     var sizeOfSwarm;
     var points = [];    //city locations X, Y
     var swarm = [];     //swarm, each swarm element is array of points
@@ -47,6 +48,8 @@ var swarmHelper = function (c) {
     var iterations = 0;
 
     var drawingBoard = canvasHelper(c);
+    var bestDrawingBoard = canvasHelper(bestCanvas);
+
 
     var getMousePos = function (canvas, e) {
         var rect = canvas.getBoundingClientRect();
@@ -103,7 +106,7 @@ var swarmHelper = function (c) {
             dist += getDistance(particle[i], particle[i + 1]);
         }
         return dist;
-    }
+    };
 
     var hasDublicates = function (particle) {
         var pointsInPath = [];
@@ -160,6 +163,7 @@ var swarmHelper = function (c) {
         return Math.round(sum / swarm.length);
     };
 
+    //---------------------------------------
     var printResults = function () {
         var table = document.createElement('TABLE');
         var tableDiv = document.getElementById('results');
@@ -212,6 +216,16 @@ var swarmHelper = function (c) {
 
         tableDiv.appendChild(table);
     };
+
+    var disableInput = function (disable) {
+        document.getElementById('tspCanvas').disabled = disable;
+        document.getElementById('swarmSize').disabled = disable;
+        document.getElementById('cleanBtn').disabled = disable;
+        document.getElementById('startBtn').disabled = disable;
+        document.getElementById('stepBtn').disabled = disable;
+        document.getElementById('stopBtn').disabled = !disable;
+    }
+    //---------------------------------------
 
     //create random path using all points only once
     var uniquePath = function () {
@@ -284,6 +298,10 @@ var swarmHelper = function (c) {
             swarm[i].fitness = getFitness(swarm[i]);
             drawingBoard.drawLine(swarm[i]);
         }
+        swarm.sort(function (a, b) { return a.fitness - b.fitness; });
+        bestDrawingBoard.clean();
+        bestDrawingBoard.drawPoints(points);
+        bestDrawingBoard.drawLine(swarm[0]);
     };
 
     return {
@@ -295,13 +313,7 @@ var swarmHelper = function (c) {
                 drawingBoard.drawPoints(points);
                 printResults();
             }
-
-            document.getElementById('tspCanvas').disabled = true;
-            document.getElementById('swarmSize').disabled = true;
-            document.getElementById('cleanBtn').disabled = true;
-            document.getElementById('startBtn').disabled = true;
-            document.getElementById('stepBtn').disabled = true;
-            document.getElementById('stopBtn').disabled = false;
+            disableInput(true);
 
             timer = setInterval(function () {
                 crossOver();
@@ -316,12 +328,7 @@ var swarmHelper = function (c) {
         stop: function () {
             clearInterval(timer);
 
-            document.getElementById('tspCanvas').disabled = false;
-            document.getElementById('swarmSize').disabled = false;
-            document.getElementById('cleanBtn').disabled = false;
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('stepBtn').disabled = false;
-            document.getElementById('stopBtn').disabled = true;
+            disableInput(false);
         },
         step: function () {
             if (iterations == 0) {
@@ -342,15 +349,11 @@ var swarmHelper = function (c) {
         clean: function () {
             clearInterval(timer);
             drawingBoard.clean();
+            bestDrawingBoard.clean();
             points = [];
             swarm = [];
 
-            document.getElementById('tspCanvas').disabled = false;
-            document.getElementById('swarmSize').disabled = false;
-            document.getElementById('cleanBtn').disabled = false;
-            document.getElementById('startBtn').disabled = false;
-            document.getElementById('stepBtn').disabled = false;
-            document.getElementById('stopBtn').disabled = true;
+            disableInput(false);
 
             iterations = 0;
         }
@@ -358,5 +361,6 @@ var swarmHelper = function (c) {
 };
 
 var c = document.getElementById('tspCanvas');
-var swarm = swarmHelper(c);
+var bestSolution = document.getElementById('bestSolutionCanvas');
+var swarm = swarmHelper(c, bestSolution);
 swarm.clean();
