@@ -39,13 +39,13 @@ var canvasHelper = function (c) {
     };
 };
 
-var swarmHelper = function (canvas, bestCanvas) {
-    var sizeOfSwarm;    //amount of different paths to use
-    var cities = [];    //city locations X, Y
-    var swarm = [];     //each swarm element is array of cuties
-    var maxDist = 0;    //longest distance between any two cities, used for punishment   
-    var timer;          //automate algorithm execution
-    var iterations = 0; //algorithm step
+var salesmansHelper = function (canvas, bestCanvas) {
+    var countOfSalesmans;   //amount of different paths to use
+    var cities = [];        //city locations X, Y
+    var salesmans = [];     //each salesmans element is array of cities
+    var maxDist = 0;        //longest distance between any two cities, used for punishment   
+    var timer;              //automate algorithm execution
+    var evolution = 0;      //algorithm step
 
     var drawingBoard = canvasHelper(c); //used to draw all paths
     var bestDrawingBoard = canvasHelper(bestCanvas); //used to draw current best path
@@ -62,11 +62,21 @@ var swarmHelper = function (canvas, bestCanvas) {
     //add mouse click listener to main canvas
     canvas.addEventListener('mousedown', function (e) {
         //canvas element is disabled when algorithm is running
-        if (canvas.disabled) {
+        // or when algorithm was running and then paused, should clean and then add more cities
+        if (canvas.disabled
+            || (cities.length > 0 && evolution != 0)) {
             return;
         }
 
         var pos = getMousePos(this, e);
+
+        //dont add same point twice
+        for (var i = 0; i < cities.length; i++) {
+            if (cities[i].x == pos.x && cities[i].y == pos.y) {
+                return;
+            }
+        }
+
         cities.push(pos);
         drawingBoard.drawCities(cities);
     });
@@ -80,7 +90,7 @@ var swarmHelper = function (canvas, bestCanvas) {
         return Math.floor(Math.random() * max);
     };
 
-    //each swarm gets random color before algorithm start
+    //each salesmans gets random color before algorithm start
     var getRandomColor = function () {
         var letters = '0123456789ABCDEF'.split('');
         var color = '#';
@@ -138,8 +148,8 @@ var swarmHelper = function (canvas, bestCanvas) {
 
     var minFitness = function () {
         var min = 999999999999;
-        for (var a = 0; a < swarm.length; a++) {
-            min = Math.min(swarm[a].fitness, min);
+        for (var a = 0; a < salesmans.length; a++) {
+            min = Math.min(salesmans[a].fitness, min);
         }
         return min;
     };
@@ -148,9 +158,9 @@ var swarmHelper = function (canvas, bestCanvas) {
     var bestParticleId = function () {
         var best = 999999999999;
         var bestId = 0;
-        for (var a = 0; a < swarm.length; a++) {
-            if (swarm[a].fitness < best) {
-                best = swarm[a].fitness;
+        for (var a = 0; a < salesmans.length; a++) {
+            if (salesmans[a].fitness < best) {
+                best = salesmans[a].fitness;
                 bestId = a;
             }
         }
@@ -159,18 +169,18 @@ var swarmHelper = function (canvas, bestCanvas) {
 
     var maxFitness = function () {
         var max = 0;
-        for (var a = 0; a < swarm.length; a++) {
-            max = Math.max(swarm[a].fitness, max);
+        for (var a = 0; a < salesmans.length; a++) {
+            max = Math.max(salesmans[a].fitness, max);
         }
         return max;
     };
 
     var avgFitness = function () {
         var sum = 0;
-        for (var a = 0; a < swarm.length; a++) {
-            sum += swarm[a].fitness;
+        for (var a = 0; a < salesmans.length; a++) {
+            sum += salesmans[a].fitness;
         }
-        return Math.round(sum / swarm.length);
+        return Math.round(sum / salesmans.length);
     };
 
     //helper functions to output information
@@ -184,9 +194,9 @@ var swarmHelper = function (canvas, bestCanvas) {
         table.appendChild(tableBody);
 
         var heading = new Array();
-        heading[0] = 'Particle'
+        heading[0] = 'Salesman'
         heading[1] = 'Path'
-        heading[2] = 'Fitness'
+        heading[2] = 'Distance'
 
         //TABLE COLUMNS
         var tr = document.createElement('TR');
@@ -199,30 +209,30 @@ var swarmHelper = function (canvas, bestCanvas) {
         }
 
         //TABLE ROWS
-        for (i = 0; i < swarm.length; i++) {
+        for (i = 0; i < salesmans.length; i++) {
             var tr = document.createElement('TR');
             var td1 = document.createElement('TD');
-            td1.appendChild(document.createTextNode(i));
+            td1.appendChild(document.createTextNode(salesmans[i].index));
             tr.appendChild(td1);
 
             var td2 = document.createElement('TD');
-            td2.appendChild(document.createTextNode(swarm[i].join(',')));
+            td2.appendChild(document.createTextNode(salesmans[i].join(',')));
             tr.appendChild(td2);
 
             var td3 = document.createElement('TD');
-            td3.appendChild(document.createTextNode(swarm[i].fitness));
+            td3.appendChild(document.createTextNode(salesmans[i].fitness));
             tr.appendChild(td3);
 
             tableBody.appendChild(tr);
         }
 
-        tableDiv.appendChild(document.createTextNode('Max fitness: ' + maxFitness()));
+        tableDiv.appendChild(document.createTextNode('Max distance: ' + maxFitness()));
         tableDiv.appendChild(document.createElement('br'));
-        tableDiv.appendChild(document.createTextNode('Min fitness: ' + minFitness()));
+        tableDiv.appendChild(document.createTextNode('Min distance: ' + minFitness()));
         tableDiv.appendChild(document.createElement('br'));
-        tableDiv.appendChild(document.createTextNode('Avg fitness: ' + avgFitness()));
+        tableDiv.appendChild(document.createTextNode('Avg distance: ' + avgFitness()));
         tableDiv.appendChild(document.createElement('br'));
-        tableDiv.appendChild(document.createTextNode('Iteration: ' + iterations));
+        tableDiv.appendChild(document.createTextNode('Evolution: ' + evolution));
         tableDiv.appendChild(document.createElement('br'));
         tableDiv.appendChild(document.createTextNode('City count: ' + cities.length));
 
@@ -231,7 +241,7 @@ var swarmHelper = function (canvas, bestCanvas) {
 
     var disableInputFields = function (disable) {
         document.getElementById('tspCanvas').disabled = disable;
-        document.getElementById('swarmSize').disabled = disable;
+        document.getElementById('countOfSalesmans').disabled = disable;
         document.getElementById('cleanBtn').disabled = disable;
         document.getElementById('startBtn').disabled = disable;
         document.getElementById('stepBtn').disabled = disable;
@@ -258,7 +268,7 @@ var swarmHelper = function (canvas, bestCanvas) {
     };
 
     var initialize = function () {
-        for (var i = 0; i < sizeOfSwarm; i++) {
+        for (var i = 0; i < countOfSalesmans; i++) {
             var particle = [];
 
             //get random path, which goes only once to each citie
@@ -268,59 +278,82 @@ var swarmHelper = function (canvas, bestCanvas) {
             //calculate fitness, path between from first city to last
             particle.fitness = getFitness(particle);
 
-            swarm.push(particle);
+            particle.index = i;
+
+            salesmans.push(particle);
             drawingBoard.drawLine(particle);
         }
         maxDist = maxDistance();
     };
 
-    //switch 20% random cities from fittest to others
+    var indexOf = function (element, array) {
+        for (var i = 0; i < array.length; i++) {
+            if (array[i] === element) {
+                return i;
+            }
+        }
+        return null;
+    }
+
+    //take random cities from fittest to others
     var crossOver = function () {
         var bestId = bestParticleId();
         var amountToCross = Math.floor(cities.length * 0.2);
-        for (var i = 0; i < swarm.length; i++) {
+        for (var i = 0; i < salesmans.length; i++) {
             for (var a = 0; a < amountToCross; a++) {
                 var toCross = randomCity();
-                swarm[i][toCross] = swarm[bestId][toCross];
+                var from = indexOf(salesmans[bestId][toCross], salesmans[i]);
+
+                if (from == null) {
+                    continue;
+                }
+
+                var tempIndex = from;
+                var tempValue = salesmans[i][from];
+
+                salesmans[i][from] = salesmans[i][toCross];
+                salesmans[i][toCross] = tempValue;
             }
         }
     };
 
-    //20% chance to mutate (swap cities), exclude fittest
+    //swap cities, exclude fittest
     var mutate = function () {
         var bestId = bestParticleId();
-        var amountToMutate = 1;
-        for (var i = 0; i < swarm.length; i++) {
-            var doMutation = random(5);
+        for (var i = 0; i < salesmans.length; i++) {
+            var extraMutationForExtraBad = Math.floor(cities[i].fitness / cities[bestId].fitness > 1.49 ? (cities[i].fitness / cities[bestId].fitness - 1.2) : 0) * 10;
+
+            var amountToMutate = Math.floor(cities.length * ((random(3) + extraMutationForExtraBad) * 0.1));
+            var doMutation = random(2);
 
             if (bestId != i && doMutation == 1) {
                 for (var a = 0; a < amountToMutate; a++) {
                     var from = randomCity();
                     var to = randomCity();
-                    var temp = swarm[i][to];
-                    swarm[i][to] = swarm[i][from];
-                    swarm[i][from] = temp;
+                    var temp = salesmans[i][to];
+                    salesmans[i][to] = salesmans[i][from];
+                    salesmans[i][from] = temp;
                 }
             }
         }
     };
 
-    //calculate fitness for all swarm elements and update canvas
+    //calculate fitness for all salesmans elements and update canvas
     var calculateFitness = function () {
-        for (var i = 0; i < sizeOfSwarm; i++) {
-            swarm[i].fitness = getFitness(swarm[i]);
-            drawingBoard.drawLine(swarm[i]);
+        for (var i = 0; i < countOfSalesmans; i++) {
+            salesmans[i].fitness = getFitness(salesmans[i]);
+            drawingBoard.drawLine(salesmans[i]);
         }
 
-        swarm.sort(function (a, b) { return a.fitness - b.fitness; });
-        bestDrawingBoard.drawLine(swarm[0]);
+        salesmans.sort(function (a, b) { return a.fitness - b.fitness; });
+        bestDrawingBoard.drawLine(salesmans[0]);
     };
 
 
     var initializeOnFirstStep = function () {
-        if (iterations == 0) {
-            sizeOfSwarm = parseInt(document.getElementById('swarmSize').value);
-            swarm = [];
+        if (evolution == 0) {
+            countOfSalesmans = parseInt(document.getElementById('countOfSalesmans').value);
+            salesmans = [];
             initialize();
             drawCities();
             printResults();
@@ -336,7 +369,7 @@ var swarmHelper = function (canvas, bestCanvas) {
 
         calculateFitness();
         printResults();
-        iterations++;
+        evolution++;
     };
 
 
@@ -369,18 +402,22 @@ var swarmHelper = function (canvas, bestCanvas) {
             initializeOnFirstStep();
             stepByOne();
         },
+        stop: function () {
+            clearInterval(timer);
+            disableInputFields(false);
+        },
         clean: function () {
             clearInterval(timer);
             cleanCanvas();
             cities = [];
-            swarm = [];
+            salesmans = [];
             disableInputFields(false);
-            iterations = 0;
+            evolution = 0;
         }
     }
 };
 
 var c = document.getElementById('tspCanvas');
 var bestSolution = document.getElementById('bestSolutionCanvas');
-var swarm = swarmHelper(c, bestSolution);
-swarm.clean();
+var salesmans = salesmansHelper(c, bestSolution);
+salesmans.clean();
