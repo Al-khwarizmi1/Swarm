@@ -115,34 +115,34 @@ var salesmansHelper = function (canvas, bestCanvas) {
         return max;
     };
 
-    var getTotalDistance = function (particle) {
+    var getTotalDistance = function (salesman) {
         var dist = 0;
-        for (var i = 0; i < cities.length - 1; i++) {
-            dist += getDistance(particle[i], particle[i + 1]);
+        for (var i = 0; i < salesman.length - 1; i++) {
+            dist += getDistance(salesman[i], salesman[i + 1]);
         }
 
-        if (cities.length > 2) {
-            dist += getDistance(particle[0], particle[cities.length - 1]);
+        if (salesman.length > 2) {
+            dist += getDistance(salesman[0], salesman[cities.length - 1]);
         }
 
         return dist;
     };
 
-    var hasDuplicates = function (particle) {
+    var hasDuplicates = function (salesman) {
         var citiesInPath = [];
-        for (var i = 0; i < cities.length; i++) {
-            if (citiesInPath[particle[i]]) {
+        for (var i = 0; i < salesman.length; i++) {
+            if (citiesInPath[salesman[i]]) {
                 return true
             }
-            citiesInPath[particle[i]] = true;
+            citiesInPath[salesman[i]] = true;
         }
         return false;
     };
 
-    var getFitness = function (particle) {
+    var getFitness = function (salesman) {
         //penalty for cheating, when same city is visited more than once
-        var penalty = hasDuplicates(particle) * cities.length * maxDist;
-        var distance = getTotalDistance(particle);
+        var penalty = hasDuplicates(salesman) * cities.length * maxDist;
+        var distance = getTotalDistance(salesman);
         return Math.round(distance + penalty);
     };
 
@@ -155,7 +155,7 @@ var salesmansHelper = function (canvas, bestCanvas) {
     };
 
     //lower fitness = shorter path
-    var bestParticleId = function () {
+    var bestSalesmanId = function () {
         var best = 999999999999;
         var bestId = 0;
         for (var a = 0; a < salesmans.length; a++) {
@@ -271,11 +271,11 @@ var salesmansHelper = function (canvas, bestCanvas) {
         for (var i = 0; i < countOfSalesmans; i++) {
             var particle = [];
 
-            //get random path, which goes only once to each citie
+            //get random path, which goes only once to each city
             particle = uniquePath();
             //random color for display
             particle.color = getRandomColor();
-            //calculate fitness, path between from first city to last
+            //calculate fitness, path between first first city to last
             particle.fitness = getFitness(particle);
 
             particle.index = i;
@@ -297,7 +297,7 @@ var salesmansHelper = function (canvas, bestCanvas) {
 
     //take random cities from fittest to others
     var crossOver = function () {
-        var bestId = bestParticleId();
+        var bestId = bestSalesmanId();
         var amountToCross = Math.floor(cities.length * 0.2);
         for (var i = 0; i < salesmans.length; i++) {
             for (var a = 0; a < amountToCross; a++) {
@@ -319,9 +319,9 @@ var salesmansHelper = function (canvas, bestCanvas) {
 
     //swap cities, exclude fittest
     var mutate = function () {
-        var bestId = bestParticleId();
+        var bestId = bestSalesmanId();
         for (var i = 0; i < salesmans.length; i++) {
-            var extraMutationForExtraBad = Math.floor(cities[i].fitness / cities[bestId].fitness > 1.49 ? (cities[i].fitness / cities[bestId].fitness - 1.2) : 0) * 10;
+            var extraMutationForExtraBad = Math.floor(salesmans[i].fitness / salesmans[bestId].fitness > 1.49 ? (salesmans[i].fitness / salesmans[bestId].fitness - 1.2) : 0) * 10;
 
             var amountToMutate = Math.floor(cities.length * ((random(3) + extraMutationForExtraBad) * 0.1));
             var doMutation = random(2);
@@ -349,7 +349,6 @@ var salesmansHelper = function (canvas, bestCanvas) {
         bestDrawingBoard.drawLine(salesmans[0]);
     };
 
-
     var initializeOnFirstStep = function () {
         if (evolution == 0) {
             countOfSalesmans = parseInt(document.getElementById('countOfSalesmans').value);
@@ -371,7 +370,6 @@ var salesmansHelper = function (canvas, bestCanvas) {
         printResults();
         evolution++;
     };
-
 
     //helper functions to sinchronize canvas operations
     var drawCities = function () {
